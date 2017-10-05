@@ -54,6 +54,8 @@ class AP_Logger(object):
                 return
             if log_output.lower() == "stdout":
                 self._output = sys.stdout
+            if log_output.lower() == "buffer":
+                self._output = io.StringIO()
             else:
                 self._filename = log_output
         try:
@@ -93,8 +95,18 @@ class AP_Logger(object):
         if 'reason' in event:
             event['reason'] = repr(event['reason'])
         event['message'] = ev
-        event['log_level'] = event['log_level'].name
+        try:
+            event['log_level'] = event['log_level'].name
+        except AttributeError:
+            event['log_level'] = event['log_level']
         return json.dumps(event)
+
+    def dump(self):
+        try:
+            self._output.seek(0)
+            return self._output.readlines()
+        except IOError:
+            return None
 
     def start(self):
         if self._filename:
